@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COWRIE HONEYPOT LIVE MONITOR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; }
+        .card { background-color: #161b22; border: 1px solid #30363d; }
+        .table { color: #c9d1d9; }
+        .blink { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        .log-row { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { text-shadow: 0 0 10px #58a6ff; }
+        small { color: #8b949e; }
+        .text-muted { color: #6e7681 !important; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col text-center">
+            <h1><span id="status-dot" style="color:red;">●</span> LIVE THREAT MONITOR</h1>
+            <p class="text-muted">Laboratorio de Ciberseguridad - Proyecto Académico Grupo 3</p>
+        </div>
+    </div>
+
+    <div class="row mb-4 text-center">
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h3 id="count-total" class="text-primary">0</h3>
+                <small>ATAQUES TOTALES</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h3 id="count-hacked" class="text-danger">0</h3>
+                <small>INTRUSIONES EXITOSAS</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h3 id="count-ips" class="text-warning">0</h3>
+                <small>ATACANTES ÚNICOS</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-dark border-bottom border-secondary">
+            <strong>📡 REGISTRO DE EVENTOS EN TIEMPO REAL</strong>
+        </div>
+        <div class="card-body p-0" style="height: 500px; overflow-y: auto;">
+            <table class="table table-dark table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 20%">HORA</th>
+                        <th style="width: 15%">IP ORIGEN</th>
+                        <th style="width: 20%">TIPO</th>
+                        <th>DETALLE</th>
+                    </tr>
+                </thead>
+                <tbody id="log-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    const socket = io();
+    const tableBody = document.getElementById('log-table-body');
+    const statusDot = document.getElementById('status-dot');
+
+    socket.on('connect', () => {
+        statusDot.style.color = "#39d353"; // Verde cuando conecta
+        statusDot.style.textShadow = "0 0 10px #39d353";
+    });
+
+    socket.on('disconnect', () => {
+        statusDot.style.color = "red";
+    });
+
+    socket.on('new_log', (data) => {
+        document.getElementById('count-total').innerText = data.stats.total;
+        document.getElementById('count-hacked').innerText = data.stats.hacked;
+        document.getElementById('count-ips').innerText = data.stats.unique_ips;
+
+        const row = document.createElement('tr');
+        row.className = 'log-row';
+        row.innerHTML = `
+            <td>${data.time}</td>
+            <td style="color: #58a6ff;">${data.ip}</td>
+            <td><span class="badge bg-${data.color}">${data.type}</span></td>
+            <td style="font-family: monospace;">${data.msg}</td>
+        `;
+
+        tableBody.insertBefore(row, tableBody.firstChild);
+
+        if (tableBody.children.length > 50) {
+            tableBody.removeChild(tableBody.lastChild);
+        }
+
+        if (data.type.includes("INTRUSIÓN")) {
+            let audio = new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg');
+            audio.play().catch(e => console.log("Chrome bloqueó el audio automático"));
+            
+            document.body.style.backgroundColor = "red";
+            setTimeout(() => { document.body.style.backgroundColor = "#0d1117"; }, 200);
+        }
+    });
+    
+</script>
+</body>
+</html>
