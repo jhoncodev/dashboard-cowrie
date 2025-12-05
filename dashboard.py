@@ -38,7 +38,7 @@ def parse_and_emit(json_str):
             data['color'] = "danger"
         elif "cowrie.login.success" in eventid:
             stats['intrusiones'] += 1
-            data['type'] = "🚨 INTRUSIÓN"
+            data['type'] = "INTRUSIÓN"
             data['msg'] = f"User: {log.get('username')} | Pass: {log.get('password')}"
             data['color'] = "success"
         elif "cowrie.command.input" in eventid:
@@ -55,13 +55,13 @@ def parse_and_emit(json_str):
             "unique_ips": len(stats['ips_unicas'])
         }
         
-        print(f"✅ ENVIANDO A WEB: {data['type']} desde {data['ip']}")
+        print(f"ENVIANDO A WEB: {data['type']} desde {data['ip']}")
         socketio.emit('new_log', data)
 
     except json.JSONDecodeError:
-        print(f"⚠️ Error decodificando JSON: {json_str[:20]}...")
+        print(f"Error decodificando JSON: {json_str[:20]}...")
     except Exception as e:
-        print(f"❌ Error procesando: {e}")
+        print(f"Error procesando: {e}")
 
 def tcp_listener():
     """Escucha datos crudos de Netcat"""
@@ -70,16 +70,16 @@ def tcp_listener():
         try:
             s.bind((TCP_IP, TCP_PORT))
             s.listen()
-            print(f"--- 📡 TCP LISTENER ESPERANDO EN PUERTO {TCP_PORT} ---")
+            print(f"--- TCP LISTENER ESPERANDO EN PUERTO {TCP_PORT} ---")
         except Exception as e:
-            print(f"❌ ERROR AL ABRIR PUERTO {TCP_PORT}: {e}")
+            print(f"ERROR AL ABRIR PUERTO {TCP_PORT}: {e}")
             print("¿Quizás otro script sigue corriendo? Cierra todas las terminales.")
             return
 
         while True:
             print("Esperando conexión de Ubuntu...")
             conn, addr = s.accept()
-            print(f"🔗 CONECTADO CON UBUNTU: {addr}")
+            print(f"CONECTADO CON UBUNTU: {addr}")
             with conn:
                 buffer = ""
                 while True:
@@ -108,5 +108,5 @@ if __name__ == '__main__':
     t.daemon = True
     t.start()
     
-    print(f"--- 🌍 WEB: http://localhost:{WEB_PORT} ---")
+    print(f"--- WEB: http://localhost:{WEB_PORT} ---")
     socketio.run(app, host='0.0.0.0', port=WEB_PORT, debug=False, allow_unsafe_werkzeug=True)
